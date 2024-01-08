@@ -1,6 +1,21 @@
 ﻿#include "pch.h"
+#include <Windows.h>
 #include <stdio.h>
 #include "gta2.h"
+
+static unsigned short currVocal = eVocals::VOCAL_0;
+FILE* stream;
+
+void ShowDebugWindow() {
+	AllocConsole();
+	
+	freopen_s(&stream, "conin$", "r", stdin);
+	freopen_s(&stream, "conout$", "w", stdout);
+	freopen_s(&stream, "conout$", "w", stderr);
+
+	printf("Anexado!\n");
+	setvbuf(stdout, NULL, _IONBF, 0);
+}
 
 void Dinossauro()
 {
@@ -10,21 +25,28 @@ void Dinossauro()
 
 	Ped* playerPed = fnGetPedByID(1);
 
-	if (!playerPed || !playerPed->gameObject /*|| !playerPed->gameObject->sprite */)
-		return;
+	money = *((unsigned int*)((char*)playerPed + 0x188));
+	id = *((int*)((char*)playerPed + 0x200));
 
-	money = *((unsigned int*)(playerPed + 0x188));
-	id = *((int*)(playerPed + 0x200));
-
-	sprintf_s(moneyMsg, "$%d", money);
+	sprintf_s(moneyMsg, "id: %d, $%d", id, money);
 	MessageBoxA(NULL, moneyMsg, "Parabéns Zé!", MB_OK);
+}
+
+void fazerVoz() 
+{
+	fnPlayVocal(eVocals::VOCAL_LAUGH);
 }
 
 DWORD WINAPI MainThread(LPVOID param)
 {
+
 	while (true) {
 		if (GetAsyncKeyState(VK_F7) & 0x80000) {
-			Dinossauro();
+			fazerVoz();
+			//Dinossauro();
+		}
+		else if (GetAsyncKeyState(VK_F8) & 0x80000) {
+			fazerVoz();
 		}
 		Sleep(100);
 	}
@@ -34,7 +56,9 @@ DWORD WINAPI MainThread(LPVOID param)
 bool WINAPI DllMain(HINSTANCE hModule, DWORD dwReason, LPVOID lpReserved)
 {
 	if (dwReason == DLL_PROCESS_ATTACH) {
-		MessageBoxA(NULL, "DLL Injetada!", "Parabéns Zé!", MB_OK);
+#if _DEBUG
+		ShowDebugWindow();
+#endif
 		CreateThread(0, 0, MainThread, hModule, 0, 0);
 	}
 	return true;
